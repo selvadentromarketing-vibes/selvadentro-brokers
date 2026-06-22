@@ -1,0 +1,23 @@
+# OS noise
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Logs
+*.log
+
+# Secrets (defensive — none expected in a static site)
+.env
+.env.local
+.env.*.local
+
+# Netlify CLI (if you install it later)
+.netlify/
+
+# Node (defensive — no build step currently)
+node_modules/
+
+# Editor
+.vscode/
+.idea/
+*.swp
