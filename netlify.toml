@@ -1,0 +1,7 @@
+# Netlify build settings for the brokers site.
+# The repo used to be a plain static page; it is now a Vite app, so the
+# build command + publish dir must be declared or Netlify will publish
+# the raw repo root.
+[build]
+  command = "npm run build"
+  publish = "dist"
