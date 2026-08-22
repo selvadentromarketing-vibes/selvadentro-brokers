@@ -3,10 +3,11 @@ import { createClient } from '@supabase/supabase-js';
 /**
  * Supabase client for the brokers site.
  *
- * DEDICATED Supabase project for brokers — deliberately separate from the
- * Referidos project so broker data and referral data can never mix. The
- * broker tables (brokers / broker_clicks / broker_leads) are reached
- * exclusively through SECURITY DEFINER RPC functions
+ * Same Supabase project as referidos.selvadentrotulum.com (one free-plan
+ * project), but fully isolated data: brokers get their own tables
+ * (brokers / broker_clicks / broker_leads — never shared with the referral
+ * tables) reached exclusively through their own SECURITY DEFINER RPC
+ * functions. This client cannot read or write any table directly
  * (see db/brokers-schema.sql).
  *
  * Uses the publishable key (sb_publishable_...), safe to ship to the

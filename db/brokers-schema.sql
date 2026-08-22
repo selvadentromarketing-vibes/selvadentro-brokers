@@ -1,10 +1,18 @@
 -- =============================================================================
 --  Selvadentro Brokers — V1 schema
 --  Apply via: Supabase Dashboard → SQL Editor → paste + Run
---  Project:   a DEDICATED Supabase project for brokers (create a new one,
---             e.g. "selvadentro-brokers"). Deliberately NOT the Referidos
---             project — broker data and referral data stay fully separate,
---             with their own URL, keys and dashboard.
+--  Project:   oqvxpapestbxcwiybgzl.supabase.co (same project as Referidos,
+--             to stay on one free-plan project).
+--
+--  ISOLATION GUARANTEE — brokers and referrals can never mix even though
+--  they share the project:
+--    * Completely separate tables: brokers / broker_clicks / broker_leads
+--      vs affiliates / clicks / leads. No foreign keys or joins across.
+--    * Completely separate functions: create_broker / track_broker_click /
+--      create_broker_lead only touch broker tables — enforced by the SQL
+--      itself, not by convention.
+--    * RLS with no policies on every table: neither site can read or write
+--      any table directly; each can only call its own functions.
 -- =============================================================================
 --
 -- DESIGN NOTES (mirrors db/schema.sql in the Referidos repo)

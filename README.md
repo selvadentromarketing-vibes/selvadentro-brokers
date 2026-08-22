@@ -15,10 +15,12 @@ replicando la arquitectura del [programa de Referidos](https://github.com/selvad
 
 ## Arquitectura (idéntica a Referidos)
 
-1. **Supabase** (proyecto **dedicado** para brokers, separado del de Referidos para que
-   los datos nunca se mezclen) es la fuente de verdad: tablas `brokers`, `broker_clicks`,
-   `broker_leads`, accesibles solo por funciones RPC `SECURITY DEFINER`.
-   Ver [`db/brokers-schema.sql`](db/brokers-schema.sql).
+1. **Supabase** (mismo proyecto que Referidos — un solo proyecto en plan gratuito — pero
+   con **datos 100% aislados**: los brokers tienen sus propias tablas `brokers`,
+   `broker_clicks`, `broker_leads`, sin ninguna relación con las tablas de referidos, y
+   sus propias funciones RPC `SECURITY DEFINER` que solo pueden escribir en esas tablas;
+   la separación la garantiza la base de datos, no una convención).
+   Ver las notas de aislamiento en [`db/brokers-schema.sql`](db/brokers-schema.sql).
 2. **GoHighLevel** recibe una copia vía *inbound webhook workflows* para las comunicaciones
    humanas (correo de bienvenida al broker, pipelines de Charlie). Si el webhook falla o no
    está configurado, el dato ya quedó en Supabase.
@@ -30,15 +32,12 @@ protegida para el broker (este era el problema #1 y #2 de Coordinación de Broke
 
 ## Setup (pasos pendientes de una sola vez)
 
-1. **Supabase** — crear un proyecto **nuevo y dedicado** (p. ej. "selvadentro-brokers" —
-   NO usar el proyecto de Referidos), y pegar y correr
-   [`db/brokers-schema.sql`](db/brokers-schema.sql) en su SQL Editor. Verificación al
-   final del archivo. Si el proyecto es de plan gratuito, agregarlo al repo
-   `supabase-keepalive` para que no se pause por inactividad.
+1. **Supabase** — pegar y correr [`db/brokers-schema.sql`](db/brokers-schema.sql) en el
+   SQL Editor del proyecto de Referidos (crea las tablas y funciones de brokers,
+   totalmente aparte de las de referidos). Verificación al final del archivo.
 2. **Netlify** — el repo dejó de ser HTML plano; `netlify.toml` ya declara
    `npm run build` → `dist`. Configurar las env vars `VITE_SUPABASE_URL` y
-   `VITE_SUPABASE_ANON_KEY` con los valores del **nuevo** proyecto de brokers
-   (Supabase Dashboard → Settings → API), ver `.env.example`.
+   `VITE_SUPABASE_ANON_KEY` (mismos valores que el sitio de Referidos, ver `.env.example`).
 3. **GoHighLevel** — crear los 2 workflows de inbound webhook (`BROKER_SIGNUP` y
    `BROKER_LEAD`) siguiendo [`docs/PLAN-GHL-BROKERS.md`](docs/PLAN-GHL-BROKERS.md)
    y pegar las URLs generadas en `src/utils/webhook.ts`
