@@ -15,9 +15,10 @@ replicando la arquitectura del [programa de Referidos](https://github.com/selvad
 
 ## Arquitectura (idéntica a Referidos)
 
-1. **Supabase** (mismo proyecto que Referidos: `oqvxpapestbxcwiybgzl.supabase.co`) es la
-   fuente de verdad: tablas `brokers`, `broker_clicks`, `broker_leads`, accesibles solo
-   por funciones RPC `SECURITY DEFINER`. Ver [`db/brokers-schema.sql`](db/brokers-schema.sql).
+1. **Supabase** (proyecto **dedicado** para brokers, separado del de Referidos para que
+   los datos nunca se mezclen) es la fuente de verdad: tablas `brokers`, `broker_clicks`,
+   `broker_leads`, accesibles solo por funciones RPC `SECURITY DEFINER`.
+   Ver [`db/brokers-schema.sql`](db/brokers-schema.sql).
 2. **GoHighLevel** recibe una copia vía *inbound webhook workflows* para las comunicaciones
    humanas (correo de bienvenida al broker, pipelines de Charlie). Si el webhook falla o no
    está configurado, el dato ya quedó en Supabase.
@@ -29,11 +30,15 @@ protegida para el broker (este era el problema #1 y #2 de Coordinación de Broke
 
 ## Setup (pasos pendientes de una sola vez)
 
-1. **Supabase** — pegar y correr [`db/brokers-schema.sql`](db/brokers-schema.sql) en
-   SQL Editor del proyecto de Referidos. Verificación al final del archivo.
+1. **Supabase** — crear un proyecto **nuevo y dedicado** (p. ej. "selvadentro-brokers" —
+   NO usar el proyecto de Referidos), y pegar y correr
+   [`db/brokers-schema.sql`](db/brokers-schema.sql) en su SQL Editor. Verificación al
+   final del archivo. Si el proyecto es de plan gratuito, agregarlo al repo
+   `supabase-keepalive` para que no se pause por inactividad.
 2. **Netlify** — el repo dejó de ser HTML plano; `netlify.toml` ya declara
    `npm run build` → `dist`. Configurar las env vars `VITE_SUPABASE_URL` y
-   `VITE_SUPABASE_ANON_KEY` (mismos valores que el sitio de Referidos, ver `.env.example`).
+   `VITE_SUPABASE_ANON_KEY` con los valores del **nuevo** proyecto de brokers
+   (Supabase Dashboard → Settings → API), ver `.env.example`.
 3. **GoHighLevel** — crear los 2 workflows de inbound webhook (`BROKER_SIGNUP` y
    `BROKER_LEAD`) siguiendo [`docs/PLAN-GHL-BROKERS.md`](docs/PLAN-GHL-BROKERS.md)
    y pegar las URLs generadas en `src/utils/webhook.ts`

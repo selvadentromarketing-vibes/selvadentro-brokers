@@ -1,9 +1,10 @@
 -- =============================================================================
 --  Selvadentro Brokers — V1 schema
 --  Apply via: Supabase Dashboard → SQL Editor → paste + Run
---  Project:   oqvxpapestbxcwiybgzl.supabase.co  (SAME project as Referidos —
---             these tables live alongside affiliates/clicks/leads and reuse
---             the same anon key, so the site needs no new env vars.)
+--  Project:   a DEDICATED Supabase project for brokers (create a new one,
+--             e.g. "selvadentro-brokers"). Deliberately NOT the Referidos
+--             project — broker data and referral data stay fully separate,
+--             with their own URL, keys and dashboard.
 -- =============================================================================
 --
 -- DESIGN NOTES (mirrors db/schema.sql in the Referidos repo)
