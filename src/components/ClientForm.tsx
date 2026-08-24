@@ -13,6 +13,7 @@ const splitName = (full: string): { first: string; last: string } => {
 
 export default function ClientForm() {
   const [fullName, setFullName] = useState('');
+  const [email, setEmail] = useState('');
   const [phoneLast4, setPhoneLast4] = useState('');
   const [city, setCity] = useState('');
   const [status, setStatus] = useState<'idle' | 'submitting' | 'success' | 'error'>('idle');
@@ -22,8 +23,12 @@ export default function ClientForm() {
     e.preventDefault();
     setErrorMessage(null);
 
-    if (!fullName.trim() || !phoneLast4.trim() || !city.trim()) {
+    if (!fullName.trim() || !email.trim() || !phoneLast4.trim() || !city.trim()) {
       setErrorMessage('Por favor completa todos los campos.');
+      return;
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+      setErrorMessage('Revisa el correo electrónico — parece incompleto.');
       return;
     }
     if (!/^\d{4}$/.test(phoneLast4.trim())) {
@@ -37,7 +42,13 @@ export default function ClientForm() {
     // while navigating (captureTrackingParams persisted it on page load).
     const tracking = getStoredTrackingParams();
     const result = await submitBrokerLead(
-      { first_name: first, last_name: last, phone_last4: phoneLast4.trim(), city: city.trim() },
+      {
+        first_name: first,
+        last_name: last,
+        email: email.trim(),
+        phone_last4: phoneLast4.trim(),
+        city: city.trim(),
+      },
       tracking,
     );
 
@@ -69,7 +80,7 @@ export default function ClientForm() {
     >
       <h3 className="font-cardo text-2xl sm:text-3xl font-bold text-brand-dark-green mb-1 leading-tight">Registro de cliente</h3>
       <p className="text-sm text-stone-600 mb-5">
-        Solo pedimos lo mínimo: tu contacto completo lo conserva tu broker, nadie más te llamará.
+        Solo unos datos para dejar tu registro a nombre de tu broker, que te acompaña en todo el proceso.
       </p>
 
       <div className="space-y-3">
@@ -82,6 +93,19 @@ export default function ClientForm() {
             className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-olive/40 focus:border-brand-olive transition"
             placeholder="Nombre del cliente"
             autoComplete="name"
+            required
+          />
+        </label>
+
+        <label className="block">
+          <span className="block text-xs font-semibold uppercase tracking-wider text-stone-700 mb-1">Correo electrónico</span>
+          <input
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-olive/40 focus:border-brand-olive transition"
+            placeholder="cliente@correo.com"
+            autoComplete="email"
             required
           />
         </label>
@@ -140,7 +164,7 @@ export default function ClientForm() {
       </button>
 
       <p className="mt-3 text-[11px] text-stone-500 text-center leading-relaxed">
-        Este registro vincula al cliente con su broker ante Selvadentro. No enviamos correos ni llamadas al cliente.
+        Este registro vincula al cliente con su broker ante Selvadentro, que sigue siendo su punto de contacto.
       </p>
     </form>
   );

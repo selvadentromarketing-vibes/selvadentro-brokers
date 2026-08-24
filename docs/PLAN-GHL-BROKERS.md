@@ -51,6 +51,10 @@ location `crN2IhAuOBAl7D8324yI`, auditada el 21-ago-2026 vía API).
 
 ## Problema 1 — Registrar brokers sin disparar las automatizaciones de ventas
 
+**Webhooks ya creados** (agosto 2026, conectados en `src/utils/webhook.ts`):
+`BROKER_SIGNUP` → `…/webhook-trigger/1701c3d9-fbe0-486f-a00a-abbee30c637e` ·
+`BROKER_LEAD` → `…/webhook-trigger/6c3bdd09-3ee9-46ef-b7bf-3e670d64759f`
+
 **Solución implementada:** la página `https://brokers.selvadentrotulum.com/` es ahora el
 alta oficial de brokers. Entra por webhook (igual que Referidos), NO por el dashboard,
 así que Diana/Mariano no reciben al broker como si fuera lead.
@@ -80,24 +84,25 @@ así que Diana/Mariano no reciben al broker como si fuera lead.
 **Solución implementada:** al registrarse, cada broker recibe
 `https://brokers.selvadentrotulum.com/registro?ref=<su-código>`. El código se genera en
 Supabase (`carlos-a4f8`), cada visita al link se registra (`broker_clicks`) y cada cliente
-registrado queda atribuido al broker (`broker_leads`). El formulario pide exactamente lo
-acordado: **nombre, apellido, últimos 4 dígitos del teléfono y ciudad** — sin correo ni
-teléfono completo, para que nadie pueda contactar al cliente por fuera del broker.
+registrado queda atribuido al broker (`broker_leads`). El formulario pide **nombre, apellido, correo,
+últimos 4 dígitos del teléfono y ciudad**. El teléfono completo nunca se pide — lo
+conserva el broker, que sigue siendo el punto de contacto del cliente.
 
 **Qué crear en GHL (una sola vez):** workflow **`BROKER_LEAD`**
 
 1. Trigger: **Inbound Webhook** → URL a `BROKER_LEAD_WEBHOOK_URL` en `src/utils/webhook.ts`.
 2. Acciones:
-   - **Create Contact** con `first_name`, `last_name`, `city` (el contacto NO tendrá email
-     ni teléfono — es intencional; GHL lo permite desde workflow).
+   - **Create Contact** con `first_name`, `last_name`, `email`, `city` (sin teléfono:
+     solo se captura el last4 como campo personalizado).
    - **Update Custom Fields**: "Últimos 4 dígitos del teléfono de tu cliente"
      (`contact.ltimos_4_dgitos_de_su_telfono`) ← `phone_last4`;
      `referred_by_code` ← `referred_by`; `referred_by_name`; `referred_by_email`.
    - **Add Tag**: `broker-client`.
    - **Create Opportunity** en *Brokers - Producción (B2B2C)* → etapa *Registro de cliente*.
    - **Notificación interna** a Charlie (email o tarea), NUNCA al cliente.
-3. Importante: **no** agregar acciones de email/SMS al contacto — no tiene datos de
-   contacto y no debe tenerlos.
+3. Importante: el contacto **sí** trae correo, así que el tag `broker-client` y el
+   blindaje del problema 1 son lo único que evita que las automatizaciones de ventas lo
+   persigan. Haz ese paso antes de difundir los links.
 
 ## Problema 3 — Que Charlie pueda editar su propio pipeline
 

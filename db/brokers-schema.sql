@@ -21,10 +21,11 @@
 --     SECURITY DEFINER functions that control exactly what is inserted.
 --   * RLS is enabled on every table with NO policies → anon cannot touch
 --     tables directly.
---   * Broker-referred clients arrive with ONLY: first name, last name,
---     last 4 digits of their phone, and city. No email / full phone —
---     the broker keeps ownership of the client's contact info, and no
---     sales automation can call or message the client directly.
+--   * Broker-referred clients arrive with: first name, last name, email,
+--     the last 4 digits of their phone, and city. The full phone number is
+--     never collected — the broker keeps it, and stays the client's point
+--     of contact. In GHL, the `broker-client` tag is what keeps the sales
+--     automations off these contacts.
 -- =============================================================================
 
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
@@ -67,6 +68,7 @@ CREATE TABLE broker_leads (
   broker_id       UUID REFERENCES brokers(id) ON DELETE SET NULL,
   first_name      TEXT NOT NULL,
   last_name       TEXT,
+  email           TEXT NOT NULL,
   phone_last4     TEXT NOT NULL CHECK (phone_last4 ~ '^[0-9]{4}$'),
   city            TEXT NOT NULL,
   status          TEXT NOT NULL DEFAULT 'new'
@@ -176,6 +178,7 @@ $$;
 CREATE OR REPLACE FUNCTION create_broker_lead(
   p_first_name   TEXT,
   p_last_name    TEXT,
+  p_email        TEXT,
   p_phone_last4  TEXT,
   p_city         TEXT,
   p_broker_code  TEXT,
@@ -209,11 +212,11 @@ BEGIN
     WHERE  b.code = p_broker_code AND b.status = 'active';
   END IF;
   INSERT INTO broker_leads (
-    first_name, last_name, phone_last4, city,
+    first_name, last_name, email, phone_last4, city,
     broker_id, landing_page, utm_source, utm_campaign
   )
   VALUES (
-    p_first_name, p_last_name, p_phone_last4, p_city,
+    p_first_name, p_last_name, p_email, p_phone_last4, p_city,
     v_broker_id, p_landing_page, p_utm_source, p_utm_campaign
   )
   RETURNING broker_leads.id INTO v_lead_id;
@@ -231,11 +234,11 @@ ALTER TABLE broker_leads  ENABLE ROW LEVEL SECURITY;
 
 REVOKE ALL ON FUNCTION create_broker(TEXT, TEXT, TEXT, TEXT, TEXT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION track_broker_click(TEXT, TEXT, TEXT, TEXT, TEXT, TEXT, TEXT, TEXT) FROM PUBLIC;
-REVOKE ALL ON FUNCTION create_broker_lead(TEXT, TEXT, TEXT, TEXT, TEXT, TEXT, TEXT, TEXT) FROM PUBLIC;
+REVOKE ALL ON FUNCTION create_broker_lead(TEXT, TEXT, TEXT, TEXT, TEXT, TEXT, TEXT, TEXT, TEXT) FROM PUBLIC;
 
 GRANT EXECUTE ON FUNCTION create_broker(TEXT, TEXT, TEXT, TEXT, TEXT) TO anon, authenticated;
 GRANT EXECUTE ON FUNCTION track_broker_click(TEXT, TEXT, TEXT, TEXT, TEXT, TEXT, TEXT, TEXT) TO anon, authenticated;
-GRANT EXECUTE ON FUNCTION create_broker_lead(TEXT, TEXT, TEXT, TEXT, TEXT, TEXT, TEXT, TEXT) TO anon, authenticated;
+GRANT EXECUTE ON FUNCTION create_broker_lead(TEXT, TEXT, TEXT, TEXT, TEXT, TEXT, TEXT, TEXT, TEXT) TO anon, authenticated;
 
 -- ─── ADMIN STATS VIEW ──────────────────────────────────────────────────────
 -- Query in Supabase Table Editor or via service_role. NOT exposed to anon.
@@ -272,7 +275,7 @@ LEFT JOIN (
 --    SELECT * FROM create_broker('Test', 'Broker', 'Agencia X', 'testbroker@example.com', '+5215551234567');
 --    -- → returns { id: <uuid>, code: 'test-a3f8' }
 --
---    SELECT * FROM create_broker_lead('Cliente', 'Prueba', '1234', 'CDMX', 'test-a3f8', 'https://brokers.selvadentrotulum.com/registro', NULL, NULL);
+--    SELECT * FROM create_broker_lead('Cliente', 'Prueba', 'cliente@example.com', '1234', 'CDMX', 'test-a3f8', 'https://brokers.selvadentrotulum.com/registro', NULL, NULL);
 --    -- → returns { id, broker_name: 'Test Broker', ... }
 --
 --    SELECT * FROM broker_stats;
@@ -280,4 +283,17 @@ LEFT JOIN (
 --    -- Cleanup:
 --    DELETE FROM broker_leads WHERE first_name = 'Cliente' AND phone_last4 = '1234';
 --    DELETE FROM brokers WHERE email = 'testbroker@example.com';
+-- =============================================================================
+
+-- =============================================================================
+--  MIGRATION — only if an EARLIER version of this file was already applied
+--  (the first version had no email on broker_leads). Safe to skip on a fresh
+--  install; the statements above already include the column.
+--
+--    ALTER TABLE broker_leads ADD COLUMN IF NOT EXISTS email TEXT;
+--    UPDATE broker_leads SET email = '' WHERE email IS NULL;
+--    ALTER TABLE broker_leads ALTER COLUMN email SET NOT NULL;
+--    DROP FUNCTION IF EXISTS create_broker_lead(TEXT, TEXT, TEXT, TEXT, TEXT, TEXT, TEXT, TEXT);
+--    -- then re-run the CREATE OR REPLACE FUNCTION create_broker_lead(...) and
+--    -- its GRANT statement from this file.
 -- =============================================================================

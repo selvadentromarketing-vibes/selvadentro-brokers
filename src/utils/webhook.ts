@@ -10,8 +10,9 @@ import { TrackingParams, getBrokerCode } from './tracking';
  *
  *   submitBrokerLead   → Supabase (create lead row, link to broker by code)
  *                      → GHL (create client record in the Brokers - Producción
- *                        pipeline; the record has NO email / full phone, so no
- *                        automation can contact the client directly)
+ *                        pipeline, tagged broker-client so the sales
+ *                        automations skip it — the broker keeps the
+ *                        relationship)
  *
  *   trackBrokerClick   → Supabase only (don't pollute GHL contacts per click)
  *
@@ -29,19 +30,18 @@ const normalizeE164 = (raw: string | undefined, defaultCountryCode = '+52'): str
 };
 
 /**
- * GHL inbound-webhook workflow URLs.
+ * GHL inbound-webhook workflow URLs — the BROKER_SIGNUP and BROKER_LEAD
+ * workflows in the Selvadentro Tulum location (see docs/PLAN-GHL-BROKERS.md).
  *
- * Each one comes from a workflow whose trigger is "Inbound Webhook"
- * (create them in GHL → Automation → Create Workflow → Inbound Webhook,
- * mirroring the REFERRER_SIGNUP / REFERRAL_LEAD workflows the Referidos
- * site uses — see docs/PLAN-GHL-BROKERS.md, steps 1 and 2).
- *
- * Until they are created, leave the empty string: the site still works —
- * brokers and clients are recorded in Supabase — and the GHL step is
- * skipped silently.
+ * Posting here is best-effort: if GHL is down or the workflow is unpublished,
+ * the broker/client is still recorded in Supabase and the failure is logged
+ * rather than surfaced to the person filling the form.
  */
-const BROKER_SIGNUP_WEBHOOK_URL = '';
-const BROKER_LEAD_WEBHOOK_URL = '';
+const BROKER_SIGNUP_WEBHOOK_URL =
+  'https://services.leadconnectorhq.com/hooks/crN2IhAuOBAl7D8324yI/webhook-trigger/1701c3d9-fbe0-486f-a00a-abbee30c637e';
+
+const BROKER_LEAD_WEBHOOK_URL =
+  'https://services.leadconnectorhq.com/hooks/crN2IhAuOBAl7D8324yI/webhook-trigger/6c3bdd09-3ee9-46ef-b7bf-3e670d64759f';
 
 const REGISTRO_LINK_BASE = 'https://brokers.selvadentrotulum.com/registro';
 
@@ -75,6 +75,7 @@ export interface BrokerSignupData {
 export interface BrokerLeadData {
   first_name: string;
   last_name: string;
+  email: string;
   phone_last4: string;
   city: string;
 }
@@ -179,6 +180,7 @@ export const submitBrokerLead = async (
   const { data: rpcRows, error: rpcError } = await supabase.rpc('create_broker_lead', {
     p_first_name: data.first_name,
     p_last_name: data.last_name || null,
+    p_email: data.email,
     p_phone_last4: data.phone_last4,
     p_city: data.city,
     p_broker_code: broker_code,
@@ -197,16 +199,18 @@ export const submitBrokerLead = async (
   const broker_email: string | null = row?.broker_email ?? null;
   const broker_agency: string | null = row?.broker_agency ?? null;
 
-  // Step 2 — Forward to GHL. Deliberately NO email / full phone: the client
-  // record cannot be reached by any automation; all contact goes through the
-  // broker. phone_last4 maps to the existing GHL custom field
-  // contact.ltimos_4_dgitos_de_su_telfono.
+  // Step 2 — Forward to GHL. The client's full phone is deliberately never
+  // collected — only the last 4 digits, which map to the existing GHL custom
+  // field contact.ltimos_4_dgitos_de_su_telfono. The `broker-client` tag is
+  // what keeps the sales automations off this contact (see the "blindaje"
+  // step in docs/PLAN-GHL-BROKERS.md).
   await postToGhl(
     BROKER_LEAD_WEBHOOK_URL,
     {
       first_name: data.first_name,
       last_name: data.last_name,
       name: `${data.first_name} ${data.last_name}`.trim(),
+      email: data.email,
       phone_last4: data.phone_last4,
       city: data.city,
       form_type: 'broker-client',

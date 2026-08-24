@@ -10,7 +10,7 @@ replicando la arquitectura del [programa de Referidos](https://github.com/selvad
 | Ruta | Qué es |
 |---|---|
 | `/` | Registro de brokers. El broker se registra y recibe **su link personal** al instante (en pantalla + por correo vía GHL). |
-| `/registro?ref=<código>` | Landing de registro de clientes — el link personal de cada broker. El cliente (o el broker en su nombre) se registra con **nombre, últimos 4 dígitos del teléfono y ciudad**. El registro queda atribuido al broker del código. |
+| `/registro?ref=<código>` | Landing de registro de clientes — el link personal de cada broker. El cliente (o el broker en su nombre) se registra con **nombre, correo, últimos 4 dígitos del teléfono y ciudad**. El registro queda atribuido al broker del código. |
 | `/evento-25-junio/` | La página estática del evento "7 Red Flags de una Preventa" con Carlos Otero (25 de junio), que antes vivía en la raíz del sitio. Los links viejos al evento siguen funcionando ahí. |
 
 ## Arquitectura (idéntica a Referidos)
@@ -26,9 +26,10 @@ replicando la arquitectura del [programa de Referidos](https://github.com/selvad
    está configurado, el dato ya quedó en Supabase.
 3. **Clicks** al link del broker se registran solo en Supabase (no ensucian contactos en GHL).
 
-Punto clave del diseño: **el cliente del broker se registra sin correo y sin teléfono
-completo**, así ninguna automatización de ventas puede contactarlo — la relación queda
-protegida para el broker (este era el problema #1 y #2 de Coordinación de Brokers).
+Punto clave del diseño: **el teléfono completo del cliente nunca se pide** — lo conserva
+el broker, que sigue siendo su punto de contacto. En GHL, el tag `broker-client` es lo que
+mantiene a las automatizaciones de ventas lejos de estos contactos (problemas #1 y #2 de
+Coordinación de Brokers).
 
 ## Setup (pasos pendientes de una sola vez)
 
@@ -38,13 +39,13 @@ protegida para el broker (este era el problema #1 y #2 de Coordinación de Broke
 2. **Netlify** — el repo dejó de ser HTML plano; `netlify.toml` ya declara
    `npm run build` → `dist`. Configurar las env vars `VITE_SUPABASE_URL` y
    `VITE_SUPABASE_ANON_KEY` (mismos valores que el sitio de Referidos, ver `.env.example`).
-3. **GoHighLevel** — crear los 2 workflows de inbound webhook (`BROKER_SIGNUP` y
-   `BROKER_LEAD`) siguiendo [`docs/PLAN-GHL-BROKERS.md`](docs/PLAN-GHL-BROKERS.md)
-   y pegar las URLs generadas en `src/utils/webhook.ts`
-   (`BROKER_SIGNUP_WEBHOOK_URL` / `BROKER_LEAD_WEBHOOK_URL`).
+3. **GoHighLevel** — los 2 workflows de inbound webhook (`BROKER_SIGNUP` y `BROKER_LEAD`)
+   ya existen y sus URLs están conectadas en `src/utils/webhook.ts`. Falta terminar de
+   configurar sus acciones y publicarlos, y aplicar el blindaje de las automatizaciones de
+   ventas — todo en [`docs/PLAN-GHL-BROKERS.md`](docs/PLAN-GHL-BROKERS.md).
 
-Mientras el paso 3 no esté hecho, el sitio funciona igual (todo queda en Supabase);
-solo faltará el correo automático de bienvenida y la creación del contacto en GHL.
+Mientras esas acciones no estén publicadas, el sitio funciona igual (todo queda en
+Supabase); solo faltará el correo de bienvenida y el contacto/oportunidad en GHL.
 
 ## Desarrollo
 

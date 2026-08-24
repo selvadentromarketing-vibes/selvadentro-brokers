@@ -47,6 +47,7 @@ export interface BrokerLeadRow {
   broker_id: string | null;
   first_name: string;
   last_name: string | null;
+  email: string;
   phone_last4: string;
   city: string;
   status: 'new' | 'contacted' | 'qualified' | 'won' | 'lost';
