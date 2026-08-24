@@ -1,9 +1,11 @@
 # Plan de acción — Canal de Brokers en GoHighLevel
 
-Documento de trabajo del canal de brokers. Problemas 1, 2 y 3 resueltos y verificados;
-el 4 (reactivación) está en manos de la secuencia que escribió Charlie.
-con los hallazgos de la auditoría del CRM (subcuenta **Selvadentro Tulum**,
-location `crN2IhAuOBAl7D8324yI`, auditada el 21-ago-2026 vía API).
+Documento de trabajo del canal de brokers de Coordinación de Brokers (Charlie).
+Problemas 1, 2 y 3 **resueltos y verificados** contra el CRM en vivo; el 4
+(reactivación) corre con la secuencia que escribió Charlie.
+
+Subcuenta **Selvadentro Tulum**, location `crN2IhAuOBAl7D8324yI`. Hallazgos de la
+auditoría por API (21-ago-2026), pruebas de punta a punta (24-ago-2026).
 
 ---
 
