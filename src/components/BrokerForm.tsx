@@ -21,6 +21,7 @@ export default function BrokerForm() {
   const [status, setStatus] = useState<'idle' | 'submitting' | 'success' | 'error'>('idle');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [registroLink, setRegistroLink] = useState<string | null>(null);
+  const [isExisting, setIsExisting] = useState(false);
   const [copied, setCopied] = useState(false);
 
   const handleSubmit = async (e: FormEvent) => {
@@ -46,6 +47,7 @@ export default function BrokerForm() {
 
     if (result.success && result.registro_link) {
       setRegistroLink(result.registro_link);
+      setIsExisting(Boolean(result.existing));
       setStatus('success');
     } else {
       setStatus('error');
@@ -78,9 +80,13 @@ export default function BrokerForm() {
       <div className="w-full max-w-md mx-auto bg-white rounded-2xl p-6 sm:p-8 shadow-2xl border border-stone-100">
         <div className="text-center mb-5">
           <CheckCircle2 className="w-14 h-14 text-brand-olive mx-auto mb-3" />
-          <h3 className="font-cardo text-2xl font-bold text-brand-dark-green mb-1">¡Listo! Este es tu link de broker</h3>
+          <h3 className="font-cardo text-2xl font-bold text-brand-dark-green mb-1">
+            {isExisting ? 'Ya tenías tu link de broker' : '¡Listo! Este es tu link de broker'}
+          </h3>
           <p className="text-sm text-stone-600">
-            Compártelo con tus clientes o úsalo tú mismo para registrarlos. Todo registro con este link queda amarrado a tu nombre.
+            {isExisting
+              ? 'Tu correo ya estaba registrado, así que aquí está el link que te corresponde. Es el mismo de siempre: úsalo con todos tus clientes.'
+              : 'Compártelo con tus clientes o úsalo tú mismo para registrarlos. Todo registro con este link queda amarrado a tu nombre.'}
           </p>
         </div>
 
@@ -114,7 +120,7 @@ export default function BrokerForm() {
         </div>
 
         <p className="text-[11px] text-stone-500 text-center leading-relaxed">
-          También te lo enviamos por correo. Guárdalo — es tu identificador ante Selvadentro. ¿Dudas? Escríbenos a{' '}
+          {isExisting ? 'Guárdalo' : 'También te lo enviamos por correo. Guárdalo'} — es tu identificador ante Selvadentro. ¿Dudas? Escríbenos a{' '}
           <a href="mailto:info@selvadentrotulum.com" className="text-brand-olive underline">
             info@selvadentrotulum.com
           </a>

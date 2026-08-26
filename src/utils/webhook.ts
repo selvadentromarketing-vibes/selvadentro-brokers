@@ -86,7 +86,32 @@ export interface SubmissionResult {
   /** For broker signups: the code + full link, shown on-screen immediately. */
   broker_code?: string;
   registro_link?: string;
+  /** True when the broker was already registered and we returned the link
+   *  they already had, instead of failing on the duplicate email. */
+  existing?: boolean;
 }
+
+/**
+ * Look up the link of a broker who is already registered.
+ *
+ * Returns null if the lookup is unavailable — notably when get_broker_link
+ * has not been applied to the database yet — so the caller falls back to the
+ * plain "this email is already registered" message rather than breaking.
+ */
+const lookupExistingBrokerCode = async (email: string): Promise<string | null> => {
+  try {
+    const { data, error } = await supabase.rpc('get_broker_link', { p_email: email });
+    if (error) {
+      console.warn('get_broker_link failed — falling back to the duplicate message:', error);
+      return null;
+    }
+    const row = Array.isArray(data) ? data[0] : data;
+    return row?.code ?? null;
+  } catch (e) {
+    console.warn('get_broker_link errored:', e);
+    return null;
+  }
+};
 
 // ──────────────────────────────────────────────────────────────────────────
 // BROKER SIGNUP
@@ -106,15 +131,30 @@ export const submitBrokerSignup = async (
   });
 
   if (rpcError) {
-    console.error('Supabase create_broker failed:', rpcError);
     const isDuplicate =
       typeof rpcError.message === 'string' && rpcError.message.includes('brokers_email_key');
-    return {
-      success: false,
-      error: isDuplicate
-        ? new Error('Ya existe un broker registrado con este correo. Revisa tu bandeja de entrada o escríbenos.')
-        : rpcError,
-    };
+
+    // Already registered → give them the link they already have rather than
+    // an error. Brokers hit this constantly (they forget, or the welcome mail
+    // landed in spam), and a dead end here loses them.
+    if (isDuplicate) {
+      const existingCode = await lookupExistingBrokerCode(data.email);
+      if (existingCode) {
+        return {
+          success: true,
+          existing: true,
+          broker_code: existingCode,
+          registro_link: `${REGISTRO_LINK_BASE}?ref=${encodeURIComponent(existingCode)}`,
+        };
+      }
+      return {
+        success: false,
+        error: new Error('Ya existe un broker registrado con este correo. Revisa tu bandeja de entrada o escríbenos.'),
+      };
+    }
+
+    console.error('Supabase create_broker failed:', rpcError);
+    return { success: false, error: rpcError };
   }
 
   const row = Array.isArray(rpcRows) ? rpcRows[0] : rpcRows;
