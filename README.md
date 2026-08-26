@@ -57,6 +57,15 @@ npm run typecheck
 npm run build
 ```
 
+## Herramientas
+
+- [`tools/generate-broker-links.py`](tools/generate-broker-links.py) — genera el link
+  personal de los brokers que **ya existen en el CRM** y se lo guarda en su ficha, sin
+  pasar por el formulario ni por el workflow de bienvenida (no crea oportunidades, no
+  manda correos, no toca tags). Corre en simulacro por defecto; `--apply` para escribir.
+  Necesita `GHL_API_KEY` en el entorno. Se usó el 26-ago-2026 para los 97 brokers con
+  correo de la base; los 11 sin correo los lista al final.
+
 ## Documentos
 
 - [`docs/PLAN-GHL-BROKERS.md`](docs/PLAN-GHL-BROKERS.md) — plan de acción para los 4

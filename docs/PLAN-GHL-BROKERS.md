@@ -122,6 +122,34 @@ conserva el broker, que sigue siendo el punto de contacto del cliente.
    blindaje del problema 1 son lo único que evita que las automatizaciones de ventas lo
    persigan. Haz ese paso antes de difundir los links.
 
+### Links pre-generados para la base existente (26-ago-2026)
+
+Los brokers que ya estaban en el CRM no tenían por qué pasar por el formulario para
+obtener su link. Se les generó por adelantado: **97 de los 108 contactos con tag `broker`**
+ya tienen código en Supabase y los dos campos escritos en su ficha
+(`contact.affiliate_code` y `contact.referral_link`). 0 errores.
+
+Cómo se hizo, y por qué importa para la campaña:
+
+- El código salió de la RPC `create_broker` (con `get_broker_link` como respaldo para los
+  que ya lo tenían), y de ahí un `PUT /contacts/{id}` a GHL con los dos campos.
+- Se escribió **por API, sin pasar por el workflow `BROKER_SIGNUP`**: no se creó ninguna
+  oportunidad, no se movió ninguna etapa y **nadie recibió correo de bienvenida**.
+- **No se les puso el tag `broker-signup-web`** a propósito. Ese tag queda como métrica
+  limpia de quién se activó por la web durante la campaña; pre-cargarlo habría hecho ver
+  la campaña como exitosa antes de que nadie hiciera nada.
+- Los tags existentes (`broker`, `charlie-madrigal`, `stop-auto`, …) quedaron intactos.
+
+**Consecuencia práctica:** el Toque 2 puede mandar `{{contact.referral_link}}` directo.
+El broker ya no tiene que registrarse para tener link — un paso menos en el embudo.
+
+**11 brokers quedaron fuera por no tener correo en el CRM** (el correo es el
+identificador único del sistema): Marylène Maglio, Alejandro Palomares, Lydia Sampayo
+Real Estate, Isabel Llabrés, Jorge Hidalgo, Daniela González, Enrique Mendez, Diego
+Gutierrez, Marilu Castelo, Dayana Farias, Sergio L. Todos menos Daniela González tienen
+teléfono. O se les pide el correo por WhatsApp y se corre el generador para ellos, o se
+les manda la página de registro y se registran solos.
+
 ## Problema 3 — Que Charlie pueda editar su propio pipeline
 
 **Estado: RESUELTO** (24-ago-2026). Charlie Madrigal ya tiene rol **admin** en la
@@ -192,6 +220,10 @@ El Toque 2 es el lugar natural para meter el **link personal de registro de clie
 ya se está hablando de comisión, y el link es justo lo que la protege. Pendiente de
 confirmar con Charlie si se integra ahí o si va como toque aparte.
 
+Como los links ya están pre-generados (ver Problema 2), el correo dice *"este es TU link"*
+con `{{contact.referral_link}}` en vez de mandar al broker a registrarse. Cuidado con los
+11 sin correo: no tienen link y no reciben correo — a esos hay que buscarlos por WhatsApp.
+
 ---
 
 ## Pendientes técnicos abiertos
@@ -202,6 +234,11 @@ de los brokers de la campaña **ya tienen** oportunidad en *Expansión y activac
 se registren por el link el workflow `BROKER_SIGNUP` les va a crear una **segunda**
 oportunidad y el tablero de Charlie se llena de duplicados. Arreglo: condición If/Else en
 `BROKER_SIGNUP` que solo cree la oportunidad si el contacto no tiene ya una en ese pipeline.
+
+Los links pre-generados bajan el riesgo pero no lo cierran: los 97 ya no necesitan
+registrarse, así que el camino duplicado solo se dispara si alguno se registra igual por
+la web (o si lo hace uno de los 11 sin correo). Vale la pena poner la condición antes del
+blast de todos modos.
 
 **2. SPF no incluye a GoHighLevel.**
 `selvadentrotulum.com` publica hoy:
