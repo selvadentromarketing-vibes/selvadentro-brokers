@@ -56,7 +56,8 @@ export default function ClientForm() {
       setStatus('success');
     } else {
       setStatus('error');
-      setErrorMessage('No pudimos completar el registro. Inténtalo de nuevo en unos minutos.');
+      const ref = result.errorRef ? ` (código: ${result.errorRef})` : '';
+      setErrorMessage(`No pudimos completar el registro. Inténtalo de nuevo en unos minutos.${ref}`);
     }
   };
 

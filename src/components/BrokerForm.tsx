@@ -52,7 +52,8 @@ export default function BrokerForm() {
     } else {
       setStatus('error');
       const errMsg = result.error instanceof Error ? result.error.message : null;
-      setErrorMessage(errMsg ?? 'No pudimos completar tu registro. Inténtalo de nuevo en unos minutos.');
+      const ref = result.errorRef ? ` (código: ${result.errorRef})` : '';
+      setErrorMessage(errMsg ?? `No pudimos completar tu registro. Inténtalo de nuevo en unos minutos.${ref}`);
     }
   };
 

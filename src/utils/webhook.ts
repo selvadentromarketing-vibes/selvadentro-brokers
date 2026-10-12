@@ -89,7 +89,21 @@ export interface SubmissionResult {
   /** True when the broker was already registered and we returned the link
    *  they already had, instead of failing on the duplicate email. */
   existing?: boolean;
+  /** Short cause of a failed Supabase call, shown next to the error message
+   *  so a screenshot of the form says what broke (see supabaseErrorRef). */
+  errorRef?: string;
 }
+
+/**
+ * "sin-conexion" when Supabase never answered (project paused, network down,
+ * request blocked); otherwise the Postgres/PostgREST code — 42501 permission
+ * denied, PGRST202 function missing, 23502 missing value… — or the HTTP
+ * status when there is no code (401 bad key, 402 quota exceeded…).
+ */
+const supabaseErrorRef = (error: { code?: string } | null, status: number): string => {
+  if (status === 0) return 'sin-conexion';
+  return error?.code || `http-${status}`;
+};
 
 /**
  * Look up the link of a broker who is already registered.
@@ -122,7 +136,7 @@ export const submitBrokerSignup = async (
   tracking: TrackingParams,
 ): Promise<SubmissionResult> => {
   // Step 1 — Insert into Supabase via RPC, receive the generated code back.
-  const { data: rpcRows, error: rpcError } = await supabase.rpc('create_broker', {
+  const { data: rpcRows, error: rpcError, status: rpcStatus } = await supabase.rpc('create_broker', {
     p_first_name: data.first_name,
     p_last_name: data.last_name || null,
     p_agency: data.agency || null,
@@ -153,8 +167,8 @@ export const submitBrokerSignup = async (
       };
     }
 
-    console.error('Supabase create_broker failed:', rpcError);
-    return { success: false, error: rpcError };
+    console.error(`Supabase create_broker failed (HTTP ${rpcStatus}):`, rpcError);
+    return { success: false, error: rpcError, errorRef: supabaseErrorRef(rpcError, rpcStatus) };
   }
 
   const row = Array.isArray(rpcRows) ? rpcRows[0] : rpcRows;
@@ -217,7 +231,7 @@ export const submitBrokerLead = async (
 
   // Step 1 — Insert into Supabase via RPC. The RPC also looks up the broker's
   // name / email / agency so the GHL record shows who owns the client.
-  const { data: rpcRows, error: rpcError } = await supabase.rpc('create_broker_lead', {
+  const { data: rpcRows, error: rpcError, status: rpcStatus } = await supabase.rpc('create_broker_lead', {
     p_first_name: data.first_name,
     p_last_name: data.last_name || null,
     p_email: data.email,
@@ -230,8 +244,8 @@ export const submitBrokerLead = async (
   });
 
   if (rpcError) {
-    console.error('Supabase create_broker_lead failed:', rpcError);
-    return { success: false, error: rpcError };
+    console.error(`Supabase create_broker_lead failed (HTTP ${rpcStatus}):`, rpcError);
+    return { success: false, error: rpcError, errorRef: supabaseErrorRef(rpcError, rpcStatus) };
   }
 
   const row = Array.isArray(rpcRows) ? rpcRows[0] : rpcRows;
