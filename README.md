@@ -25,6 +25,12 @@ replicando la arquitectura del [programa de Referidos](https://github.com/selvad
    humanas (correo de bienvenida al broker, pipelines de Charlie). Si el webhook falla o no
    está configurado, el dato ya quedó en Supabase.
 3. **Clicks** al link del broker se registran solo en Supabase (no ensucian contactos en GHL).
+4. **Keep-alive** — Supabase pausa los proyectos gratuitos tras una semana sin uso, y con el
+   proyecto pausado todo registro falla sin quedar guardado en ningún lado (pasó en octubre
+   de 2026). La función programada de Netlify
+   [`netlify/functions/supabase-keepalive.mjs`](netlify/functions/supabase-keepalive.mjs)
+   hace una consulta diaria que no escribe nada; si falla, aparece en los logs de
+   Functions del sitio en Netlify.
 
 Punto clave del diseño: **el teléfono completo del cliente nunca se pide** — lo conserva
 el broker, que sigue siendo su punto de contacto. En GHL, el tag `broker-client` es lo que
