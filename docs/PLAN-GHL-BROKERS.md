@@ -214,3 +214,15 @@ del envío se va a spam o rebota.
 **3. Las oportunidades de broker se crean sin dueño.**
 Las de cliente ya salen a nombre de Charlie; las de *Expansión y activación* quedan
 "sin asignar". Cosmético, pero conviene emparejarlo.
+
+**4. Correo de bienvenida en inglés.**
+El sitio ya tiene versión en inglés (`/en`, con selector ES | EN en el encabezado), y los
+dos webhooks mandan el campo `language` (`es` o `en`). Al broker que se registra en inglés
+se le genera el link `https://brokers.selvadentrotulum.com/en/register?ref=<código>`, que es
+el que llega en `referral_link`. Falta en GHL:
+- **`BROKER_SIGNUP`:** antes del *Send Email*, una condición If/Else sobre el campo
+  `language` del webhook: si es `en`, mandar una versión en inglés del correo de bienvenida
+  (mismo `{{contact.referral_link}}`); si no, el correo actual. Sin esto, el broker en
+  inglés recibe la bienvenida en español.
+- **`BROKER_LEAD`:** nada obligatorio — al cliente no se le manda nada. Opcional: incluir
+  `language` en la notificación a Charlie para que sepa en qué idioma atenderlo.

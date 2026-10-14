@@ -1,2 +1,6 @@
-# Static files (e.g. /evento-25-junio/) are served before this SPA fallback.
-/*  /index.html  200
+# Static files (e.g. /evento-25-junio/) are served before these SPA fallbacks.
+# English pages get the English index.html (built by vite.config.ts) so their
+# link previews are in English.
+/en     /en/index.html  200
+/en/*   /en/index.html  200
+/*      /index.html     200
