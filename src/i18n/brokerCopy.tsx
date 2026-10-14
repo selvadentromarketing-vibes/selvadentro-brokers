@@ -67,13 +67,13 @@ const es: BrokerCopy = {
   heroBadge: 'Programa de Brokers',
   heroLine1: 'Tu cliente. Tu comisión.',
   heroLine2: 'Registrado y protegido.',
-  heroSubtitle: 'Genera tu link personal de broker y registra a tus clientes en segundos — sin exponer sus datos de contacto.',
+  heroSubtitle: 'Genera tu link personal de broker y registra a tus clientes en segundos — sin exponer sus datos de contacto completos.',
   heroNote: 'Toma menos de un minuto. Tu link aparece al instante.',
 
   intro: (
     <>
       Sabemos que tu cartera de clientes es tu activo más valioso. Por eso el registro de clientes de Selvadentro pide{' '}
-      <Strong>solo nombre, últimos 4 dígitos del teléfono y ciudad</Strong>
+      <Strong>solo nombre, correo, últimos 4 dígitos del teléfono y ciudad</Strong>
       . El contacto completo lo conservas tú — y cada cliente queda amarrado a tu nombre desde el primer día.
     </>
   ),
@@ -85,7 +85,7 @@ const es: BrokerCopy = {
     },
     {
       title: 'Cliente protegido',
-      body: 'Sin correo ni teléfono completo: ninguna automatización ni asesor interno contactará a tu cliente.',
+      body: 'Sin teléfono completo y fuera de toda automatización: ningún asesor interno contactará a tu cliente.',
     },
     {
       title: 'Canal de brokers',
@@ -103,8 +103,8 @@ const es: BrokerCopy = {
     },
     {
       label: 'Registra clientes',
-      body: (<>Con tu link, cada cliente se registra con <Strong>nombre, últimos 4 dígitos y ciudad</Strong> — tú o él mismo, desde cualquier celular.</>),
-      note: 'Sin apps, sin cuentas, sin exponer su contacto.',
+      body: (<>Con tu link, cada cliente se registra con <Strong>nombre, correo, últimos 4 dígitos y ciudad</Strong> — tú o él mismo, desde cualquier celular.</>),
+      note: 'Sin apps, sin cuentas, sin su teléfono completo.',
     },
     {
       label: 'Cierra con respaldo',
@@ -117,7 +117,7 @@ const es: BrokerCopy = {
   promiseTitle: (<>Lo que <Em>no</Em> va a pasar con tus clientes</>),
   promiseSubtitle: 'Diseñado para proteger la relación broker–cliente.',
   promises: [
-    <>Nadie de nuestro equipo interno <strong>llamará ni escribirá a tu cliente</strong> — no tenemos su contacto.</>,
+    <>Nadie de nuestro equipo interno <strong>llamará ni escribirá a tu cliente</strong> — nunca pedimos su teléfono.</>,
     <>Tu cliente <strong>no entra a campañas de correo ni SMS</strong>: el registro no dispara ninguna automatización de ventas.</>,
     <>Tu registro de broker va al <strong>canal de Coordinación de Brokers</strong>, nunca al pipeline de leads directos.</>,
     <>Cada visita y cada registro con tu link <strong>queda medido y auditable</strong> — la atribución no se pierde.</>,

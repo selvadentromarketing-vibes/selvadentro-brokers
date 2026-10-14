@@ -60,7 +60,7 @@ const es: ClientCopy = {
   heroLine1: 'Vivir dentro de la selva,',
   heroLine2: 'entre cenotes.',
   heroSubtitle: 'Confirma tu registro con tu broker y conoce Selvadentro Tulum de su mano.',
-  heroNote: 'Solo 3 datos. Menos de un minuto.',
+  heroNote: 'Solo 4 datos. Menos de un minuto.',
 
   projectBadge: 'El proyecto',
   projectTitle: <>¿Qué es <Em>Selvadentro</Em>?</>,
@@ -79,16 +79,16 @@ const es: ClientCopy = {
   address: 'Carr. Tulum – Cancún · Tulum, Quintana Roo · selvadentrotulum.com',
 
   privacyBadge: 'Tu privacidad primero',
-  privacyTitle: <>Por qué pedimos <Em>solo 3 datos</Em></>,
+  privacyTitle: <>Por qué pedimos <Em>solo 4 datos</Em></>,
   privacy: [
-    { title: 'Tu contacto es tuyo', body: 'No pedimos tu correo ni tu teléfono completo. Tu broker es tu único punto de contacto.' },
+    { title: 'Tu contacto es tuyo', body: 'Nunca pedimos tu teléfono completo. Tu broker es tu único punto de contacto.' },
     { title: 'Cero spam', body: 'Este registro no te suscribe a nada: sin correos masivos, sin llamadas de vendedores.' },
     { title: 'Atención personal', body: 'Todo lo que necesites — información, Zoom, visita — lo coordina tu broker contigo.' },
   ],
 
   finalBadge: 'Último paso',
   finalTitle: <>Confirma tu registro <Em>con tu broker</Em></>,
-  finalSubtitle: 'Nombre, últimos 4 dígitos de tu teléfono y tu ciudad. Eso es todo.',
+  finalSubtitle: 'Nombre, correo, últimos 4 dígitos de tu teléfono y tu ciudad. Eso es todo.',
 
   form: {
     title: 'Registro de cliente',

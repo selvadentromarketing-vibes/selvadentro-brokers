@@ -7,7 +7,7 @@ const EN_HEAD: [string, string][] = [
   ['<html lang="es">', '<html lang="en">'],
   ['Programa de Brokers | Selvadentro Tulum', 'Broker Program | Selvadentro Tulum'],
   [
-    'Registra tu alianza con Selvadentro Tulum, recibe tu link personal y registra a tus clientes con solo nombre, últimos 4 dígitos y ciudad. Tu cliente queda protegido a tu nombre.',
+    'Registra tu alianza con Selvadentro Tulum, recibe tu link personal y registra a tus clientes con solo nombre, correo, últimos 4 dígitos y ciudad. Tu cliente queda protegido a tu nombre.',
     'Partner with Selvadentro Tulum, get your personal link and register your clients with just name, email, last 4 phone digits and city. Each client stays protected under your name.',
   ],
   [
