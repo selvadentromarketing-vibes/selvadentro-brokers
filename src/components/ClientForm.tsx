@@ -2,6 +2,8 @@ import { useState, FormEvent } from 'react';
 import { Loader2, CheckCircle2 } from 'lucide-react';
 import { submitBrokerLead } from '../utils/webhook';
 import { getStoredTrackingParams } from '../utils/tracking';
+import { useLang, withErrorCode } from '../i18n/lang';
+import { CLIENT_COPY } from '../i18n/clientCopy';
 
 const splitName = (full: string): { first: string; last: string } => {
   const trimmed = full.trim().replace(/\s+/g, ' ');
@@ -18,21 +20,23 @@ export default function ClientForm() {
   const [city, setCity] = useState('');
   const [status, setStatus] = useState<'idle' | 'submitting' | 'success' | 'error'>('idle');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const lang = useLang();
+  const t = CLIENT_COPY[lang].form;
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setErrorMessage(null);
 
     if (!fullName.trim() || !email.trim() || !phoneLast4.trim() || !city.trim()) {
-      setErrorMessage('Por favor completa todos los campos.');
+      setErrorMessage(t.errMissing);
       return;
     }
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
-      setErrorMessage('Revisa el correo electrónico — parece incompleto.');
+      setErrorMessage(t.errEmail);
       return;
     }
     if (!/^\d{4}$/.test(phoneLast4.trim())) {
-      setErrorMessage('Los últimos 4 dígitos del teléfono deben ser exactamente 4 números.');
+      setErrorMessage(t.errLast4);
       return;
     }
 
@@ -50,14 +54,14 @@ export default function ClientForm() {
         city: city.trim(),
       },
       tracking,
+      lang,
     );
 
     if (result.success) {
       setStatus('success');
     } else {
       setStatus('error');
-      const ref = result.errorRef ? ` (código: ${result.errorRef})` : '';
-      setErrorMessage(`No pudimos completar el registro. Inténtalo de nuevo en unos minutos.${ref}`);
+      setErrorMessage(withErrorCode(t.errGeneric, lang, result.errorRef));
     }
   };
 
@@ -65,9 +69,9 @@ export default function ClientForm() {
     return (
       <div className="w-full max-w-md mx-auto bg-white rounded-2xl p-8 shadow-2xl text-center border border-stone-100">
         <CheckCircle2 className="w-14 h-14 text-brand-olive mx-auto mb-4" />
-        <h3 className="font-cardo text-2xl font-bold text-brand-dark-green mb-2">¡Registro completado!</h3>
+        <h3 className="font-cardo text-2xl font-bold text-brand-dark-green mb-2">{t.successTitle}</h3>
         <p className="text-stone-700 leading-relaxed">
-          El registro quedó vinculado al broker que compartió este link. Tu broker te acompañará en cada paso del proceso con Selvadentro.
+          {t.successBody}
         </p>
       </div>
     );
@@ -79,33 +83,33 @@ export default function ClientForm() {
       className="w-full max-w-md mx-auto bg-white rounded-2xl p-6 sm:p-8 shadow-2xl border border-stone-100"
       noValidate
     >
-      <h3 className="font-cardo text-2xl sm:text-3xl font-bold text-brand-dark-green mb-1 leading-tight">Registro de cliente</h3>
+      <h3 className="font-cardo text-2xl sm:text-3xl font-bold text-brand-dark-green mb-1 leading-tight">{t.title}</h3>
       <p className="text-sm text-stone-600 mb-5">
-        Solo unos datos para dejar tu registro a nombre de tu broker, que te acompaña en todo el proceso.
+        {t.subtitle}
       </p>
 
       <div className="space-y-3">
         <label className="block">
-          <span className="block text-xs font-semibold uppercase tracking-wider text-stone-700 mb-1">Nombre y apellido</span>
+          <span className="block text-xs font-semibold uppercase tracking-wider text-stone-700 mb-1">{t.nameLabel}</span>
           <input
             type="text"
             value={fullName}
             onChange={(e) => setFullName(e.target.value)}
             className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-olive/40 focus:border-brand-olive transition"
-            placeholder="Nombre del cliente"
+            placeholder={t.namePlaceholder}
             autoComplete="name"
             required
           />
         </label>
 
         <label className="block">
-          <span className="block text-xs font-semibold uppercase tracking-wider text-stone-700 mb-1">Correo electrónico</span>
+          <span className="block text-xs font-semibold uppercase tracking-wider text-stone-700 mb-1">{t.emailLabel}</span>
           <input
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-olive/40 focus:border-brand-olive transition"
-            placeholder="cliente@correo.com"
+            placeholder={t.emailPlaceholder}
             autoComplete="email"
             required
           />
@@ -113,7 +117,7 @@ export default function ClientForm() {
 
         <label className="block">
           <span className="block text-xs font-semibold uppercase tracking-wider text-stone-700 mb-1">
-            Últimos 4 dígitos del teléfono <span className="text-brand-copper">*</span>
+            {t.last4Label} <span className="text-brand-copper">*</span>
           </span>
           <input
             type="text"
@@ -127,18 +131,18 @@ export default function ClientForm() {
             required
           />
           <span className="block text-[11px] text-stone-500 mt-1">
-            Solo los últimos 4 — sirven para identificar el registro sin exponer el número completo.
+            {t.last4Help}
           </span>
         </label>
 
         <label className="block">
-          <span className="block text-xs font-semibold uppercase tracking-wider text-stone-700 mb-1">Ciudad</span>
+          <span className="block text-xs font-semibold uppercase tracking-wider text-stone-700 mb-1">{t.cityLabel}</span>
           <input
             type="text"
             value={city}
             onChange={(e) => setCity(e.target.value)}
             className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-olive/40 focus:border-brand-olive transition"
-            placeholder="Ciudad de residencia"
+            placeholder={t.cityPlaceholder}
             autoComplete="address-level2"
             required
           />
@@ -157,15 +161,15 @@ export default function ClientForm() {
         {status === 'submitting' ? (
           <>
             <Loader2 className="w-4 h-4 animate-spin" />
-            Registrando…
+            {t.submitting}
           </>
         ) : (
-          'Completar registro'
+          t.submit
         )}
       </button>
 
       <p className="mt-3 text-[11px] text-stone-500 text-center leading-relaxed">
-        Este registro vincula al cliente con su broker ante Selvadentro, que sigue siendo su punto de contacto.
+        {t.footnote}
       </p>
     </form>
   );

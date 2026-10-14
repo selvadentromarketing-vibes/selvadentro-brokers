@@ -1,5 +1,6 @@
 import { supabase } from './supabase';
 import { TrackingParams, getBrokerCode } from './tracking';
+import { Lang, ROUTES } from '../i18n/lang';
 
 /**
  * Two-system writes for brokers (same pattern as the Referidos site):
@@ -43,7 +44,9 @@ const BROKER_SIGNUP_WEBHOOK_URL =
 const BROKER_LEAD_WEBHOOK_URL =
   'https://services.leadconnectorhq.com/hooks/crN2IhAuOBAl7D8324yI/webhook-trigger/6c3bdd09-3ee9-46ef-b7bf-3e670d64759f';
 
-const REGISTRO_LINK_BASE = 'https://brokers.selvadentrotulum.com/registro';
+/** A broker's personal link, in the language they signed up in. */
+const registroLink = (code: string, lang: Lang): string =>
+  `https://brokers.selvadentrotulum.com${ROUTES[lang].registro}?ref=${encodeURIComponent(code)}`;
 
 const postToGhl = async (url: string, payload: Record<string, unknown>, context: string) => {
   if (!url) {
@@ -89,6 +92,9 @@ export interface SubmissionResult {
   /** True when the broker was already registered and we returned the link
    *  they already had, instead of failing on the duplicate email. */
   existing?: boolean;
+  /** Email already registered and its link could not be looked up — the
+   *  form shows the "already registered" message in the page's language. */
+  duplicate?: boolean;
   /** Short cause of a failed Supabase call, shown next to the error message
    *  so a screenshot of the form says what broke (see supabaseErrorRef). */
   errorRef?: string;
@@ -134,6 +140,7 @@ const lookupExistingBrokerCode = async (email: string): Promise<string | null> =
 export const submitBrokerSignup = async (
   data: BrokerSignupData,
   tracking: TrackingParams,
+  lang: Lang,
 ): Promise<SubmissionResult> => {
   // Step 1 — Insert into Supabase via RPC, receive the generated code back.
   const { data: rpcRows, error: rpcError, status: rpcStatus } = await supabase.rpc('create_broker', {
@@ -158,13 +165,10 @@ export const submitBrokerSignup = async (
           success: true,
           existing: true,
           broker_code: existingCode,
-          registro_link: `${REGISTRO_LINK_BASE}?ref=${encodeURIComponent(existingCode)}`,
+          registro_link: registroLink(existingCode, lang),
         };
       }
-      return {
-        success: false,
-        error: new Error('Ya existe un broker registrado con este correo. Revisa tu bandeja de entrada o escríbenos.'),
-      };
+      return { success: false, duplicate: true };
     }
 
     console.error(`Supabase create_broker failed (HTTP ${rpcStatus}):`, rpcError);
@@ -173,11 +177,12 @@ export const submitBrokerSignup = async (
 
   const row = Array.isArray(rpcRows) ? rpcRows[0] : rpcRows;
   if (!row?.code) {
-    return { success: false, error: new Error('No se recibió código de broker') };
+    console.error('Supabase create_broker returned no broker code:', rpcRows);
+    return { success: false, errorRef: 'sin-codigo' };
   }
 
   const broker_code: string = row.code;
-  const registro_link = `${REGISTRO_LINK_BASE}?ref=${encodeURIComponent(broker_code)}`;
+  const registro_link = registroLink(broker_code, lang);
 
   // Step 2 — Forward to GHL so the workflow can tag them as broker, route them
   //          to Coordinación de Brokers and email the link. Best-effort: if GHL
@@ -192,6 +197,9 @@ export const submitBrokerSignup = async (
       phone: normalizeE164(data.phone),
       agency: data.agency,
       form_type: 'broker-signup',
+      // 'es' | 'en' — the page they signed up on. Lets the workflow send the
+      // welcome email in their language (see docs/PLAN-GHL-BROKERS.md).
+      language: lang,
       // Broker attribution from Supabase — GHL email template uses this:
       broker_code,
       // Reuses the existing GHL custom fields contact.affiliate_code /
@@ -226,6 +234,7 @@ export const submitBrokerSignup = async (
 export const submitBrokerLead = async (
   data: BrokerLeadData,
   tracking: TrackingParams,
+  lang: Lang,
 ): Promise<SubmissionResult> => {
   const broker_code = getBrokerCode(tracking) ?? null;
 
@@ -268,6 +277,7 @@ export const submitBrokerLead = async (
       phone_last4: data.phone_last4,
       city: data.city,
       form_type: 'broker-client',
+      language: lang,
       // Broker attribution — for lookup/joins + at-a-glance sales context.
       referred_by: broker_code,
       referred_by_name: broker_name,

@@ -4,6 +4,8 @@ import PhoneInput, { isValidPhoneNumber } from 'react-phone-number-input';
 import type { Value as PhoneValue } from 'react-phone-number-input';
 import { submitBrokerSignup } from '../utils/webhook';
 import { captureTrackingParams } from '../utils/tracking';
+import { useLang, withErrorCode } from '../i18n/lang';
+import { BROKER_COPY } from '../i18n/brokerCopy';
 
 const splitName = (full: string): { first: string; last: string } => {
   const trimmed = full.trim().replace(/\s+/g, ' ');
@@ -23,17 +25,19 @@ export default function BrokerForm() {
   const [registroLink, setRegistroLink] = useState<string | null>(null);
   const [isExisting, setIsExisting] = useState(false);
   const [copied, setCopied] = useState(false);
+  const lang = useLang();
+  const t = BROKER_COPY[lang].form;
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setErrorMessage(null);
 
     if (!fullName.trim() || !phone || !email.trim()) {
-      setErrorMessage('Por favor completa nombre, teléfono y correo.');
+      setErrorMessage(t.errMissing);
       return;
     }
     if (!isValidPhoneNumber(phone)) {
-      setErrorMessage('Revisa el número de teléfono — parece incompleto.');
+      setErrorMessage(t.errPhone);
       return;
     }
 
@@ -43,6 +47,7 @@ export default function BrokerForm() {
     const result = await submitBrokerSignup(
       { first_name: first, last_name: last, agency: agency.trim(), email: email.trim(), phone },
       tracking,
+      lang,
     );
 
     if (result.success && result.registro_link) {
@@ -51,9 +56,7 @@ export default function BrokerForm() {
       setStatus('success');
     } else {
       setStatus('error');
-      const errMsg = result.error instanceof Error ? result.error.message : null;
-      const ref = result.errorRef ? ` (código: ${result.errorRef})` : '';
-      setErrorMessage(errMsg ?? `No pudimos completar tu registro. Inténtalo de nuevo en unos minutos.${ref}`);
+      setErrorMessage(result.duplicate ? t.errDuplicate : withErrorCode(t.errGeneric, lang, result.errorRef));
     }
   };
 
@@ -70,9 +73,7 @@ export default function BrokerForm() {
 
   const whatsappShare = () => {
     if (!registroLink) return;
-    const msg = encodeURIComponent(
-      `Regístrate como mi cliente en Selvadentro Tulum con este link: ${registroLink}`,
-    );
+    const msg = encodeURIComponent(t.whatsappMessage(registroLink));
     window.open(`https://wa.me/?text=${msg}`, '_blank', 'noopener,noreferrer');
   };
 
@@ -82,12 +83,10 @@ export default function BrokerForm() {
         <div className="text-center mb-5">
           <CheckCircle2 className="w-14 h-14 text-brand-olive mx-auto mb-3" />
           <h3 className="font-cardo text-2xl font-bold text-brand-dark-green mb-1">
-            {isExisting ? 'Ya tenías tu link de broker' : '¡Listo! Este es tu link de broker'}
+            {isExisting ? t.successTitleExisting : t.successTitleNew}
           </h3>
           <p className="text-sm text-stone-600">
-            {isExisting
-              ? 'Tu correo ya estaba registrado, así que aquí está el link que te corresponde. Es el mismo de siempre: úsalo con todos tus clientes.'
-              : 'Compártelo con tus clientes o úsalo tú mismo para registrarlos. Todo registro con este link queda amarrado a tu nombre.'}
+            {isExisting ? t.successBodyExisting : t.successBodyNew}
           </p>
         </div>
 
@@ -103,11 +102,11 @@ export default function BrokerForm() {
           >
             {copied ? (
               <>
-                <Check className="w-4 h-4" /> Copiado
+                <Check className="w-4 h-4" /> {t.copied}
               </>
             ) : (
               <>
-                <Copy className="w-4 h-4" /> Copiar
+                <Copy className="w-4 h-4" /> {t.copy}
               </>
             )}
           </button>
@@ -121,7 +120,7 @@ export default function BrokerForm() {
         </div>
 
         <p className="text-[11px] text-stone-500 text-center leading-relaxed">
-          {isExisting ? 'Guárdalo' : 'También te lo enviamos por correo. Guárdalo'} — es tu identificador ante Selvadentro. ¿Dudas? Escríbenos a{' '}
+          {isExisting ? t.saveExisting : t.saveNew} {t.saveRest}{' '}
           <a href="mailto:info@selvadentrotulum.com" className="text-brand-olive underline">
             info@selvadentrotulum.com
           </a>
@@ -137,38 +136,38 @@ export default function BrokerForm() {
       className="w-full max-w-md mx-auto bg-white rounded-2xl p-6 sm:p-8 shadow-2xl border border-stone-100"
       noValidate
     >
-      <h3 className="font-cardo text-2xl sm:text-3xl font-bold text-brand-dark-green mb-1 leading-tight">Regístrate como broker</h3>
-      <p className="text-sm text-stone-600 mb-5">Recibe tu link personal al instante — sin llamadas, sin spam.</p>
+      <h3 className="font-cardo text-2xl sm:text-3xl font-bold text-brand-dark-green mb-1 leading-tight">{t.title}</h3>
+      <p className="text-sm text-stone-600 mb-5">{t.subtitle}</p>
 
       <div className="space-y-3">
         <label className="block">
-          <span className="block text-xs font-semibold uppercase tracking-wider text-stone-700 mb-1">Nombre completo</span>
+          <span className="block text-xs font-semibold uppercase tracking-wider text-stone-700 mb-1">{t.nameLabel}</span>
           <input
             type="text"
             value={fullName}
             onChange={(e) => setFullName(e.target.value)}
             className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-olive/40 focus:border-brand-olive transition"
-            placeholder="Tu nombre y apellido"
+            placeholder={t.namePlaceholder}
             autoComplete="name"
             required
           />
         </label>
 
         <label className="block">
-          <span className="block text-xs font-semibold uppercase tracking-wider text-stone-700 mb-1">Agencia inmobiliaria</span>
+          <span className="block text-xs font-semibold uppercase tracking-wider text-stone-700 mb-1">{t.agencyLabel}</span>
           <input
             type="text"
             value={agency}
             onChange={(e) => setAgency(e.target.value)}
             className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-olive/40 focus:border-brand-olive transition"
-            placeholder="Nombre de tu agencia (o 'independiente')"
+            placeholder={t.agencyPlaceholder}
             autoComplete="organization"
           />
         </label>
 
         <label className="block">
           <span className="block text-xs font-semibold uppercase tracking-wider text-stone-700 mb-1">
-            Teléfono / WhatsApp <span className="text-brand-copper">*</span>
+            {t.phoneLabel} <span className="text-brand-copper">*</span>
           </span>
           <div className="phone-input-shell px-4 py-3 border border-stone-300 rounded-lg bg-white transition focus-within:border-brand-olive focus-within:ring-2 focus-within:ring-brand-olive/30">
             <PhoneInput
@@ -177,23 +176,23 @@ export default function BrokerForm() {
               onChange={setPhone}
               placeholder="999 123 4567"
               autoComplete="tel"
-              numberInputProps={{ 'aria-label': 'Teléfono', required: true }}
+              numberInputProps={{ 'aria-label': t.phoneAria, required: true }}
             />
           </div>
         </label>
 
         <label className="block">
-          <span className="block text-xs font-semibold uppercase tracking-wider text-stone-700 mb-1">Correo electrónico</span>
+          <span className="block text-xs font-semibold uppercase tracking-wider text-stone-700 mb-1">{t.emailLabel}</span>
           <input
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-olive/40 focus:border-brand-olive transition"
-            placeholder="tu@correo.com"
+            placeholder={t.emailPlaceholder}
             autoComplete="email"
             required
           />
-          <span className="block text-[11px] text-stone-500 mt-1">Aquí te enviamos tu link personal y material del proyecto.</span>
+          <span className="block text-[11px] text-stone-500 mt-1">{t.emailHelp}</span>
         </label>
       </div>
 
@@ -209,15 +208,15 @@ export default function BrokerForm() {
         {status === 'submitting' ? (
           <>
             <Loader2 className="w-4 h-4 animate-spin" />
-            Generando tu link…
+            {t.submitting}
           </>
         ) : (
-          'Generar mi link de broker'
+          BROKER_COPY[lang].cta
         )}
       </button>
 
       <p className="mt-3 text-[11px] text-stone-500 text-center leading-relaxed">
-        Al registrarte aceptas que el equipo de Coordinación de Brokers de Selvadentro te contacte sobre el programa.
+        {t.consent}
       </p>
     </form>
   );

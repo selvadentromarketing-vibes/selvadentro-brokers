@@ -7,10 +7,14 @@ replicando la arquitectura del [programa de Referidos](https://github.com/selvad
 
 ## Rutas
 
-| Ruta | Qué es |
+El sitio es bilingüe: español en la raíz e inglés bajo `/en`. Cada página tiene en el
+encabezado un selector **ES | EN** que cambia de idioma con un clic y conserva el `?ref=`,
+así que el cliente sigue atribuido a su broker aunque cambie de idioma.
+
+| Ruta (español · inglés) | Qué es |
 |---|---|
-| `/` | Registro de brokers. El broker se registra y recibe **su link personal** al instante (en pantalla + por correo vía GHL). |
-| `/registro?ref=<código>` | Landing de registro de clientes — el link personal de cada broker. El cliente (o el broker en su nombre) se registra con **nombre, correo, últimos 4 dígitos del teléfono y ciudad**. El registro queda atribuido al broker del código. |
+| `/` · `/en` | Registro de brokers. El broker se registra y recibe **su link personal** al instante (en pantalla + por correo vía GHL). El link sale en el idioma en que se registró. |
+| `/registro?ref=<código>` · `/en/register?ref=<código>` | Landing de registro de clientes — el link personal de cada broker. El cliente (o el broker en su nombre) se registra con **nombre, correo, últimos 4 dígitos del teléfono y ciudad**. El registro queda atribuido al broker del código. |
 | `/evento-25-junio/` | La página estática del evento "7 Red Flags de una Preventa" con Carlos Otero (25 de junio), que antes vivía en la raíz del sitio. Los links viejos al evento siguen funcionando ahí. |
 
 ## Arquitectura (idéntica a Referidos)
@@ -53,6 +57,11 @@ Coordinación de Brokers).
 Mientras esas acciones no estén publicadas, el sitio funciona igual (todo queda en
 Supabase); solo faltará el correo de bienvenida y el contacto/oportunidad en GHL.
 
+**Versión en inglés:** los dos webhooks mandan `language` (`es` o `en`). Hasta que
+`BROKER_SIGNUP` tenga su rama en inglés, el broker que se registra en `/en` recibe su link
+en inglés en pantalla, pero el correo de bienvenida le llega en español — ver el pendiente
+técnico 4 de [`docs/PLAN-GHL-BROKERS.md`](docs/PLAN-GHL-BROKERS.md).
+
 ## Desarrollo
 
 ```bash
@@ -62,6 +71,11 @@ npm run dev            # http://localhost:5173
 npm run typecheck
 npm run build
 ```
+
+Los textos de las páginas viven en `src/i18n/` (`brokerCopy.tsx`, `clientCopy.tsx`), con
+español e inglés lado a lado: cualquier cambio de copy se hace ahí, en los dos idiomas.
+Los meta tags de las vistas previas de links (WhatsApp, redes) están en `index.html` para
+español y en `vite.config.ts` (`EN_HEAD`) para inglés.
 
 ## Documentos
 
